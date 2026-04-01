@@ -1,0 +1,1753 @@
+================================================================================
+ANÁLISE COMPLETA DO PDF - LAB3
+================================================================================
+
+Total de páginas: 59
+
+
+================================================================================
+PÁGINA 1/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   1
+DISTRIBUTED SYSTEMS
+Lab 3
+Nuno Preguiça, Sérgio Duarte, Kevin Gallagher, Salvatore 
+Signorello, João Bordalo, Dina Borrego
+
+
+================================================================================
+PÁGINA 2/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   2
+GOALS
+In the end of this lab you should be able to:
+•
+Understand what are transient communication errors in the context 
+of REST clients.
+•
+Know how to deal with errors on REST clients
+•
+Know how to persist "plain old" Java objects (POJO) using Hibernate 
+and a backing relational database
+•
+Know how to query Hibernate to recover your “plain old” Java 
+Objects.
+
+
+================================================================================
+PÁGINA 3/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   3
+GOALS
+In the end of this lab you should be able to:
+•
+Understand what are transient communication errors in the 
+context of REST clients.
+•
+Know how to deal with errors on REST clients
+•
+Know how to persist "plain old" Java objects (POJO) using Hibernate 
+and a backing relational database
+•
+Know how to query Hibernate to recover your “plain old” Java 
+Objects.
+
+
+================================================================================
+PÁGINA 4/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   4
+TRANSIENT ERRORS ON REST REQUESTS
+The execution of a REST request might fail due to multiple 
+reasons:
+•
+The server might not be running when the request is 
+performed (a TCP connection cannot be established)
+•
+The server is too slow in processing the request and the 
+client timeouts.
+•
+A TCP connection is dropped.
+•
+The network interface fails.
+•
+A temporary network anomaly (e.g., routing).
+
+
+================================================================================
+PÁGINA 5/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   5
+IDENTIFYING AN ERROR IN EXECUTING A REST 
+REQUEST
+In Jersey (JAX-RS) clients are notified of errors during the 
+execution of a request through a Java exception:
+Javax.ws.rs.ProcessingException
+Therefore, REST requests should be enclosed within a 
+try{}catch{} block so that this Exception can be captured and 
+lead to retry the request automatically after a small amount of 
+time and for a limited number of reattempts.
+
+
+================================================================================
+PÁGINA 6/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   6
+TIMEOUTS CAN LEAD TO THE PROCESSINGEXCEPTION 
+BEING GENERATED.
+Therefore, these timeouts should be configured at the level of 
+the ClientBuilder.
+Example is present in the support code on class
+RestUsersClient
+protected static final int READ_TIMEOUT = 5000;
+    protected static final int CONNECT_TIMEOUT = 5000;
+    ...
+    this.config = new ClientConfig();
+    config.property( ClientProperties.READ_TIMEOUT, READ_TIMEOUT);
+    config.property( ClientProperties.CONNECT_TIMEOUT, CONNECT_TIMEOUT);
+    this.client = ClientBuilder.newClient (config);
+
+
+================================================================================
+PÁGINA 7/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   7
+protected static final int READ_TIMEOUT = 5000;
+    protected static final int CONNECT_TIMEOUT = 5000;
+    ...
+    this.config = new ClientConfig();
+    config.property( ClientProperties.READ_TIMEOUT, READ_TIMEOUT);
+    config.property( ClientProperties.CONNECT_TIMEOUT, CONNECT_TIMEOUT);
+    this.client = ClientBuilder.newClient (config);
+TIMEOUTS CAN LEAD TO THE PROCESSINGEXCEPTION 
+BEING GENERATED.
+Therefore, these timeouts should be configured at the level of 
+the ClientBuilder.
+These translate respectively to:
+Wait at most 5 seconds for a TCP 
+connection to be established for the 
+server 
+Wait at most 5 seconds to receive 
+the reply from the server after 
+sending the request.
+
+
+================================================================================
+PÁGINA 8/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   8
+protected static final int READ_TIMEOUT = 5000;
+    protected static final int CONNECT_TIMEOUT = 5000;
+    ...
+    this.config = new ClientConfig();
+    config.property( ClientProperties.READ_TIMEOUT, READ_TIMEOUT);
+    config.property( ClientProperties.CONNECT_TIMEOUT, CONNECT_TIMEOUT);
+    this.client = ClientBuilder.newClient (config);
+TIMEOUTS CAN LEAD TO THE PROCESSINGEXCEPTION 
+BEING GENERATED.
+Therefore, these timeouts should be configured at the level of 
+the ClientBuilder.
+These translate respectively to:
+Wait at most 5 seconds for a TCP 
+connection to be established for the 
+server 
+Wait at most 5 seconds to receive 
+the reply from the server after 
+sending the request.
+
+
+================================================================================
+PÁGINA 9/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   9
+protected static final int READ_TIMEOUT = 5000;
+    protected static final int CONNECT_TIMEOUT = 5000;
+    ...
+    this.config = new ClientConfig();
+    config.property( ClientProperties.READ_TIMEOUT, READ_TIMEOUT);
+    config.property( ClientProperties.CONNECT_TIMEOUT, CONNECT_TIMEOUT);
+    this.client = ClientBuilder.newClient (config);
+These translate respectively to:
+Wait at most 5 seconds for a TCP 
+connection to be established for the 
+server 
+Wait at most 5 seconds to receive 
+the reply from the server after 
+sending the request.
+TIMEOUTS CAN LEAD TO THE PROCESSINGEXCEPTION 
+BEING GENERATED.
+Therefore, these timeouts should be configured at the level of 
+the ClientBuilder.
+
+
+================================================================================
+PÁGINA 10/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   10
+RE-EXECUTION OF A REST REQUEST
+It should be noted that immediate re-execution is not a great 
+idea, since the transient failure might need some time to 
+recover. 
+Also, a maximum number of attempts should be made to avoid 
+blocking if the failure is permanent.
+protected static final int MAX_RETRIES = 3;
+protected static final int RETRY_SLEEP = 5000;
+
+
+================================================================================
+PÁGINA 11/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   11
+protected static final int MAX_RETRIES = 3;
+protected static final int RETRY_SLEEP = 5000;
+RE-EXECUTION OF A REST REQUEST
+It should be noted that immediate re-execution is not a great 
+idea, since the transient failure might need some time to 
+recover. 
+Also, a maximum number of attempts should be made to avoid 
+blocking if the failure is permanent.
+In the lab example we are 
+limiting this to 3 retries, with 
+a wait time of 5 seconds 
+between each retry (worst 
+case the client will be blocked 
+50 seconds).
+
+
+================================================================================
+PÁGINA 12/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   12
+RE-EXECUTION OF A REST REQUEST
+public Result<String> createUser(User user) {
+    for(int i = 0; i < MAX_RETRIES; i++) {
+        try {
+            Response r = target.request()
+                .accept( MediaType.APPLICATION_JSON)
+                .post(Entity.entity(user, MediaType.APPLICATION_JSON));
+            int status = r.getStatus();
+            if( status != Status.OK.getStatusCode())
+                return Result.error( getErrorCodeFrom(status));
+            else
+                return Result.ok( r.readEntity( String.class));
+        } catch( ProcessingException x) {
+            Log.info(x.getMessage());
+            try {
+                Thread.sleep(RETRY_SLEEP);
+            } catch (InterruptedException e) {
+                // Nothing to be done here.
+            }
+        } catch( Exception x) {
+            x.printStackTrace();
+        }
+    }
+    return Result.error( ErrorCode.TIMEOUT);
+}
+We make the request within a for 
+cycle so that we can control the 
+maximum number of attempts.
+
+
+================================================================================
+PÁGINA 13/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   13
+public Result<String> createUser(User user) {
+    for(int i = 0; i < MAX_RETRIES; i++) {
+        try {
+            Response r = target.request()
+                .accept( MediaType.APPLICATION_JSON)
+                .post(Entity.entity(user, MediaType.APPLICATION_JSON));
+            int status = r.getStatus();
+            if( status != Status.OK.getStatusCode())
+                return Result.error( getErrorCodeFrom(status));
+            else
+                return Result.ok( r.readEntity( String.class));
+        } catch( ProcessingException x) {
+            Log.info(x.getMessage());
+            try {
+                Thread.sleep(RETRY_SLEEP);
+            } catch (InterruptedException e) {
+                // Nothing to be done here.
+            }
+        } catch( Exception x) {
+            x.printStackTrace();
+        }
+    }
+    return Result.error( ErrorCode.TIMEOUT);
+}
+RE-EXECUTION OF A REST REQUEST
+If we do get a reply from the server 
+(independently of success or not) we 
+return from this function so that we 
+do not execute the request again.
+
+
+================================================================================
+PÁGINA 14/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   14
+public Result<String> createUser(User user) {
+    for(int i = 0; i < MAX_RETRIES; i++) {
+        try {
+            Response r = target.request()
+                .accept( MediaType.APPLICATION_JSON)
+                .post(Entity.entity(user, MediaType.APPLICATION_JSON));
+            int status = r.getStatus();
+            if( status != Status.OK.getStatusCode())
+                return Result.error( getErrorCodeFrom(status));
+            else
+                return Result.ok( r.readEntity( String.class));
+        } catch( ProcessingException x) {
+            Log.info(x.getMessage());
+            try {
+                Thread.sleep(RETRY_SLEEP);
+            } catch (InterruptedException e) {
+                // Nothing to be done here.
+            }
+        } catch( Exception x) {
+            x.printStackTrace();
+        }
+    }
+    return Result.error( ErrorCode.TIMEOUT);
+}
+RE-EXECUTION OF A REST REQUEST
+We are using an auxiliary class named Result 
+that is parameterized with the return type 
+(for operation that return a Java object) and 
+can report if the operation was successful or 
+not (and encapsulate the Java object if the 
+server return one)
+
+
+================================================================================
+PÁGINA 15/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   15
+public Result<String> createUser(User user) {
+    for(int i = 0; i < MAX_RETRIES; i++) {
+        try {
+            Response r = target.request()
+                .accept( MediaType.APPLICATION_JSON)
+                .post(Entity.entity(user, MediaType.APPLICATION_JSON));
+            int status = r.getStatus();
+            if( status != Status.OK.getStatusCode())
+                return Result.error( getErrorCodeFrom(status));
+            else
+                return Result.ok( r.readEntity( String.class));
+        } catch( ProcessingException x) {
+            Log.info(x.getMessage());
+            try {
+                Thread.sleep(RETRY_SLEEP);
+            } catch (InterruptedException e) {
+                // Nothing to be done here.
+            }
+        } catch( Exception x) {
+            x.printStackTrace();
+        }
+    }
+    return Result.error( ErrorCode.TIMEOUT);
+}
+RE-EXECUTION OF A REST REQUEST
+If the execution of the REST operation 
+throws a ProcessingException we wait using 
+the Thread.sleep before re-executing the 
+request (i.e., go back to the start of the for 
+cycle)
+
+
+================================================================================
+PÁGINA 16/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   16
+public Result<String> createUser(User user) {
+    for(int i = 0; i < MAX_RETRIES; i++) {
+        try {
+            Response r = target.request()
+                .accept( MediaType.APPLICATION_JSON)
+                .post(Entity.entity(user, MediaType.APPLICATION_JSON));
+            int status = r.getStatus();
+            if( status != Status.OK.getStatusCode())
+                return Result.error( getErrorCodeFrom(status));
+            else
+                return Result.ok( r.readEntity( String.class));
+        } catch( ProcessingException x) {
+            Log.info(x.getMessage());
+            try {
+                Thread.sleep(RETRY_SLEEP);
+            } catch (InterruptedException e) {
+                // Nothing to be done here.
+            }
+        } catch( Exception x) {
+            x.printStackTrace();
+        }
+    }
+    return Result.error( ErrorCode.TIMEOUT);
+}
+RE-EXECUTION OF A REST REQUEST
+Depending on the type of Exception (if not 
+a ProcessingException if might make sense 
+to stop the cycle earlier).
+
+
+================================================================================
+PÁGINA 17/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   17
+public Result<String> createUser(User user) {
+    for(int i = 0; i < MAX_RETRIES; i++) {
+        try {
+            Response r = target.request()
+                .accept( MediaType.APPLICATION_JSON)
+                .post(Entity.entity(user, MediaType.APPLICATION_JSON));
+            int status = r.getStatus();
+            if( status != Status.OK.getStatusCode())
+                return Result.error( getErrorCodeFrom(status));
+            else
+                return Result.ok( r.readEntity( String.class));
+        } catch( ProcessingException x) {
+            Log.info(x.getMessage());
+            try {
+                Thread.sleep(RETRY_SLEEP);
+            } catch (InterruptedException e) {
+                // Nothing to be done here.
+            }
+        } catch( Exception x) {
+            x.printStackTrace();
+        }
+    }
+    return Result.error( ErrorCode.TIMEOUT);
+}
+RE-EXECUTION OF A REST REQUEST
+If we exhaust the maximum number of 
+attempts (i.e., get out of the cycle without 
+getting an answer from the server) we 
+return an Error in the Result stating that we 
+have timed-out.
+
+
+================================================================================
+PÁGINA 18/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   18
+AVOIDING CODE REPETITION
+The code that is provided to support this lab uses a generic 
+RestUsersClient that provides methods to exercise all endpoints 
+of Users (without the endpoints to manipulate the avatar of the 
+user).
+•
+The code only has the mechanisms to retry operations on 
+the create user operation.
+•
+Repeat this code in all operations can lead to errors and in 
+general is a bad practice.
+•
+In the future we will discuss how to factorize this portion of 
+the code.
+
+
+================================================================================
+PÁGINA 19/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   19
+GOALS
+In the end of this lab you should be able to:
+•
+Understand what are transient communication errors in the context 
+of REST clients.
+•
+Know how to deal with errors on REST clients
+•
+Know how to persist "plain old" Java objects (POJO) using 
+Hibernate and a backing relational database
+•
+Know how to query Hibernate to recover your “plain old” 
+Java Objects.
+
+
+================================================================================
+PÁGINA 20/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   20
+PERSISTENCE USING HIBERNATE
+In this course we are going to use Hibernate to create a 
+persistence layer associated with WebServices.
+Hibernate is as open-source Object Relational Mapping (ORM) 
+tool
+It fundamentally provides mechanisms to map object-oriented 
+domain (i.e., data) models to a relational database.
+Therefore, Hibernate can be used to implement persistency of 
+state and storage for web services.
+https://hibernate.org/
+
+
+================================================================================
+PÁGINA 21/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   21
+PERSISTENCE ENGINE
+Hibernate allows to persist objects using different engines, 
+while providing a unified API for the programmer.
+HSQLDB (Hyper SQL Database) is a relational database 
+management system written in Java. It has a JDBC driver and 
+supports a large subset of SQL-92, SQL:2008, SQL:2011, and 
+SQL:2016 standards.
+
+
+================================================================================
+PÁGINA 22/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   22
+MAVEN DEPENDENCIES
+<dependency>
+    <groupId>org.hsqldb</groupId>
+    <artifactId>hsqldb</artifactId>
+    <version>2.7.4</version>
+</dependency>
+<dependency>
+    <groupId>org.hibernate.orm</groupId>
+    <artifactId>hibernate-core</artifactId>
+    <version>7.2.5.Final</version>
+</dependency>
+
+
+================================================================================
+PÁGINA 23/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   23
+CONFIGURATION FILE
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN" 
+"http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <!-- JDBC Database connection settings -->
+        <property name="connection.driver_class">org.hsqldb.jdbcDriver</property>
+        <property name="connection.url">jdbc:hsqldb:file:/tmp/db</property>
+        <property name="connection.username">sa</property>
+        <property name="connection.password"></property>
+        <!-- JDBC connection pool settings ... using built-in test pool -->
+        <property name="connection.pool_size">1</property>
+        <!-- Echo the SQL to stdout -->
+        <property name="show_sql">true</property>
+        <!-- Set the current session context -->
+        <property name="current_session_context_class">thread</property>
+        <!-- Drop and re-create the database schema on startup -->
+        <property name="hbm2ddl.auto">create-drop</property>
+        <!-- dbcp connection pool configuration -->
+        <property name="hibernate.dbcp.initialSize">5</property>
+        <property name="hibernate.dbcp.maxTotal">20</property>
+        <property name="hibernate.dbcp.maxIdle">10</property>
+        <property name="hibernate.dbcp.minIdle">5</property>
+        <property name="hibernate.dbcp.maxWaitMillis">-1</property>
+        <!-- Entities stored in the database -->
+        <mapping class="lab3.api.User" />
+    </session-factory>
+</hibernate-configuration>
+
+
+================================================================================
+PÁGINA 24/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   24
+CONFIGURATION FILE
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN" 
+"http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <!-- JDBC Database connection settings -->
+        <property name="connection.driver_class">org.hsqldb.jdbcDriver</property>
+        <property name="connection.url">jdbc:hsqldb:file:/tmp/db</property>
+        <property name="connection.username">sa</property>
+        <property name="connection.password"></property>
+        <!-- JDBC connection pool settings ... using built-in test pool -->
+        <property name="connection.pool_size">1</property>
+        <!-- Echo the SQL to stdout -->
+        <property name="show_sql">true</property>
+        <!-- Set the current session context -->
+        <property name="current_session_context_class">thread</property>
+        <!-- Drop and re-create the database schema on startup -->
+        <property name="hbm2ddl.auto">create-drop</property>
+        <!-- dbcp connection pool configuration -->
+        <property name="hibernate.dbcp.initialSize">5</property>
+        <property name="hibernate.dbcp.maxTotal">20</property>
+        <property name="hibernate.dbcp.maxIdle">10</property>
+        <property name="hibernate.dbcp.minIdle">5</property>
+        <property name="hibernate.dbcp.maxWaitMillis">-1</property>
+        <!-- Entities stored in the database -->
+        <mapping class="lab3.api.User" />
+    </session-factory>
+</hibernate-configuration>
+This file defines several properties, 
+including the connection to the backing 
+database (hsqldb in this case).
+
+
+================================================================================
+PÁGINA 25/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   25
+CONFIGURATION FILE
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN" 
+"http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <!-- JDBC Database connection settings -->
+        <property name="connection.driver_class">org.hsqldb.jdbcDriver</property>
+        <property name="connection.url">jdbc:hsqldb:file:/tmp/db</property>
+        <property name="connection.username">sa</property>
+        <property name="connection.password"></property>
+        <!-- JDBC connection pool settings ... using built-in test pool -->
+        <property name="connection.pool_size">1</property>
+        <!-- Echo the SQL to stdout -->
+        <property name="show_sql">true</property>
+        <!-- Set the current session context -->
+        <property name="current_session_context_class">thread</property>
+        <!-- Drop and re-create the database schema on startup -->
+        <property name="hbm2ddl.auto">create-drop</property>
+        <!-- dbcp connection pool configuration -->
+        <property name="hibernate.dbcp.initialSize">5</property>
+        <property name="hibernate.dbcp.maxTotal">20</property>
+        <property name="hibernate.dbcp.maxIdle">10</property>
+        <property name="hibernate.dbcp.minIdle">5</property>
+        <property name="hibernate.dbcp.maxWaitMillis">-1</property>
+        <!-- Entities stored in the database -->
+        <mapping class="lab3.api.User" />
+    </session-factory>
+</hibernate-configuration>
+The configuration file must also contain the 
+list of entities that will be mapped to the 
+relational model.
+
+
+================================================================================
+PÁGINA 26/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   26
+CONFIGURATION FILE
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN" 
+"http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <!-- JDBC Database connection settings -->
+        <property name="connection.driver_class">org.hsqldb.jdbcDriver</property>
+        <property name="connection.url">jdbc:hsqldb:file:/tmp/db</property>
+        <property name="connection.username">sa</property>
+        <property name="connection.password"></property>
+        <!-- JDBC connection pool settings ... using built-in test pool -->
+        <property name="connection.pool_size">1</property>
+        <!-- Echo the SQL to stdout -->
+        <property name="show_sql">true</property>
+        <!-- Set the current session context -->
+        <property name="current_session_context_class">thread</property>
+        <!-- Drop and re-create the database schema on startup -->
+        <property name="hbm2ddl.auto">create-drop</property>
+        <!-- dbcp connection pool configuration -->
+        <property name="hibernate.dbcp.initialSize">5</property>
+        <property name="hibernate.dbcp.maxTotal">20</property>
+        <property name="hibernate.dbcp.maxIdle">10</property>
+        <property name="hibernate.dbcp.minIdle">5</property>
+        <property name="hibernate.dbcp.maxWaitMillis">-1</property>
+        <!-- Entities stored in the database -->
+        <mapping class="lab3.api.User" />
+    </session-factory>
+</hibernate-configuration>
+VERY IMPORTANT: Additional entries of this 
+type MUST be added to support storing 
+additional types of Objects.
+
+
+================================================================================
+PÁGINA 27/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   27
+CONFIGURATION FILE
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN" 
+"http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <!-- JDBC Database connection settings -->
+        <property name="connection.driver_class">org.hsqldb.jdbcDriver</property>
+        <property name="connection.url">jdbc:hsqldb:file:/tmp/db</property>
+        <property name="connection.username">sa</property>
+        <property name="connection.password"></property>
+        <!-- JDBC connection pool settings ... using built-in test pool -->
+        <property name="connection.pool_size">1</property>
+        <!-- Echo the SQL to stdout -->
+        <property name="show_sql">true</property>
+        <!-- Set the current session context -->
+        <property name="current_session_context_class">thread</property>
+        <!-- Drop and re-create the database schema on startup -->
+        <property name="hbm2ddl.auto">create-drop</property>
+        <!-- dbcp connection pool configuration -->
+        <property name="hibernate.dbcp.initialSize">5</property>
+        <property name="hibernate.dbcp.maxTotal">20</property>
+        <property name="hibernate.dbcp.maxIdle">10</property>
+        <property name="hibernate.dbcp.minIdle">5</property>
+        <property name="hibernate.dbcp.maxWaitMillis">-1</property>
+        <!-- Entities stored in the database -->
+        <mapping class="lab3.api.User" />
+    </session-factory>
+</hibernate-configuration>
+This configuration restart the database 
+whenever Hibernate is initialized (which is 
+adequate for testing purposes)
+
+
+================================================================================
+PÁGINA 28/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   28
+USING HIBERNATE
+To persist a Java object, it needs to modelled as an Entity
+The key requirements are:
+•
+Public default constructor (i.e., no arguments);
+•
+Setters and getters;
+•
+Non-final fields;
+•
+Non-final class;
+Due to these requirements Java records cannot be used as 
+Hibernate entities (e.g., fields in records are final).
+
+
+================================================================================
+PÁGINA 29/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   29
+ANNOTATION ON POJOS
+/**
+ * Represents a user in the system.
+ */
+@Entity
+public class User {
+    @Id
+    private String name;
+    private String pwd;
+    private String domain;
+    @Column(length = 1024)
+    private String displayName;
+    @ElementCollection( fetch = FetchType.EAGER)
+    private Set<String> phoneNumbers;
+    public User() {
+    }
+    public User(String name, String pwd, String displayName, String domain, Set<String> phoneNumbers) {
+        this.pwd = pwd;
+        this.name = name;
+        this.domain = domain;
+        this.displayName = displayName;
+        this.phoneNumbers = Set.copyOf( phoneNumbers);
+    }
+
+
+================================================================================
+PÁGINA 30/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   30
+ANNOTATION ON POJOS
+/**
+ * Represents a user in the system.
+ */
+@Entity
+public class User {
+    @Id
+    private String name;
+    private String pwd;
+    private String domain;
+    @Column(length = 1024)
+    private String displayName;
+    @ElementCollection( fetch = FetchType.EAGER)
+    private Set<String> phoneNumbers;
+    public User() {
+    }
+    public User(String name, String pwd, String displayName, String domain, Set<String> phoneNumbers) {
+        this.pwd = pwd;
+        this.name = name;
+        this.domain = domain;
+        this.displayName = displayName;
+        this.phoneNumbers = Set.copyOf( phoneNumbers);
+    }
+The class that represents a 
+(plain old) Java object that 
+can be persisted must be 
+annotated with the @Entity.
+
+
+================================================================================
+PÁGINA 31/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   31
+ANNOTATION ON POJOS
+/**
+ * Represents a user in the system.
+ */
+@Entity
+public class User {
+    @Id
+    private String name;
+    private String pwd;
+    private String domain;
+    @Column(length = 1024)
+    private String displayName;
+    @ElementCollection( fetch = FetchType.EAGER)
+    private Set<String> phoneNumbers;
+    public User() {
+    }
+    public User(String name, String pwd, String displayName, String domain, Set<String> phoneNumbers) {
+        this.pwd = pwd;
+        this.name = name;
+        this.domain = domain;
+        this.displayName = displayName;
+        this.phoneNumbers = Set.copyOf( phoneNumbers);
+    }
+One Field must also be 
+annotated with the @Id 
+annotation to indicate that 
+this field represents the 
+primary key of this entity in 
+the database.
+
+
+================================================================================
+PÁGINA 32/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   32
+ANNOTATION ON POJOS
+/**
+ * Represents a user in the system.
+ */
+@Entity
+public class User {
+    @Id
+    private String name;
+    private String pwd;
+    private String domain;
+    @Column(length = 1024)
+    private String displayName;
+    @ElementCollection( fetch = FetchType.EAGER)
+    private Set<String> phoneNumbers;
+    public User() {
+    }
+    public User(String name, String pwd, String displayName, String domain, Set<String> phoneNumbers) {
+        this.pwd = pwd;
+        this.name = name;
+        this.domain = domain;
+        this.displayName = displayName;
+        this.phoneNumbers = Set.copyOf( phoneNumbers);
+    }
+Annotation 
+@Column(length = 1024) 
+allows to specify the 
+maximum size of a varchar 
+(or varbinary) in the 
+database.
+The annotation affects the 
+element defined after it.
+
+
+================================================================================
+PÁGINA 33/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   33
+ANNOTATION ON POJOS
+/**
+ * Represents a user in the system.
+ */
+@Entity
+public class User {
+    @Id
+    private String name;
+    private String pwd;
+    private String domain;
+    @Column(length = 1024)
+    private String displayName;
+    @ElementCollection( fetch = FetchType.EAGER)
+    private Set<String> phoneNumbers;
+    public User() {
+    }
+    public User(String name, String pwd, String displayName, String domain, Set<String> phoneNumbers) {
+        this.pwd = pwd;
+        this.name = name;
+        this.domain = domain;
+        this.displayName = displayName;
+        this.phoneNumbers = Set.copyOf( phoneNumbers);
+    }
+Annotation 
+@ElementCollection 
+specifies that the field is a 
+collection – the collection is 
+stored in another database 
+table. Using Hibernate 
+methods, the values in the 
+collection are stored, loaded 
+and delete consistently.
+
+
+================================================================================
+PÁGINA 34/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   34
+ANNOTATION ON POJOS
+/**
+ * Represents a user in the system.
+ */
+@Entity
+public class User {
+    @Id
+    private String name;
+    private String pwd;
+    private String domain;
+    @Column(length = 1024)
+    private String displayName;
+    @ElementCollection( fetch = FetchType.EAGER)
+    private Set<String> phoneNumbers;
+    public User() {
+    }
+    public User(String name, String pwd, String displayName, String domain, Set<String> phoneNumbers) {
+        this.pwd = pwd;
+        this.name = name;
+        this.domain = domain;
+        this.displayName = displayName;
+        this.phoneNumbers = Set.copyOf( phoneNumbers);
+    }
+Parameter fetch = 
+FetchType.EAGER 
+specifies that the values of 
+the collection must be read 
+when reading the object.
+
+
+================================================================================
+PÁGINA 35/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   35
+/**
+     * A helper class to perform POJO (Plain Old Java Objects) persistence,
+     * using Hibernate and a backing relational database.
+     */
+    public class Hibernate {
+        private static final String HIBERNATE_CFG_FILE = "hibernate.cfg.xml";
+        private SessionFactory sessionFactory;
+        private static Hibernate instance;
+        private Hibernate() {
+            try {
+                sessionFactory = new Configuration()
+                    .configure(new File(HIBERNATE_CFG_FILE))
+                    .buildSessionFactory();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        /**
+         * Returns the Hibernate instance, initializing if necessary.
+         * Requires a configuration file (hibernate.cfg.xml)
+         * @return
+         */
+        synchronized public static Hibernate getInstance() {
+            if (instance == null)
+                instance = new Hibernate();
+            return instance;
+        }
+AUXILIARY CLASS TO INTERACT WITH HIBERNATE
+
+
+================================================================================
+PÁGINA 36/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   36
+/**
+     * A helper class to perform POJO (Plain Old Java Objects) persistence,
+     * using Hibernate and a backing relational database.
+     */
+    public class Hibernate {
+        private static final String HIBERNATE_CFG_FILE = "hibernate.cfg.xml";
+        private SessionFactory sessionFactory;
+        private static Hibernate instance;
+        private Hibernate() {
+            try {
+                sessionFactory = new Configuration()
+                    .configure(new File(HIBERNATE_CFG_FILE))
+                    .buildSessionFactory();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        /**
+         * Returns the Hibernate instance, initializing if necessary.
+         * Requires a configuration file (hibernate.cfg.xml)
+         * @return
+         */
+        synchronized public static Hibernate getInstance() {
+            if (instance == null)
+                instance = new Hibernate();
+            return instance;
+        }
+AUXILIARY CLASS TO INTERACT WITH HIBERNATE
+We have provided the class 
+lab3.server.persistence.Hibernate 
+to simplify the interaction with it.
+It uses the singleton pattern, 
+hence an instance of it can be 
+obtained using the getInstance 
+static method.
+
+
+================================================================================
+PÁGINA 37/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   37
+AUXILIARY CLASS TO INTERACT WITH HIBERNATE
+/**
+ * Persists one or more objects to storage
+ * @param objects - the objects to persist
+ */
+public void persist(Object...objects) {
+    Transaction tx = null;
+    try(var session = sessionFactory.openSession()) {
+        tx = session.beginTransaction();
+        for( var o : objects)
+            session.persist(o);
+        tx.commit();
+    } catch (Exception e) {
+        if (tx!=null) tx.rollback();
+            throw e;
+    }
+}
+We have provided the class 
+lab3.server.persistence.Hibernate 
+to simplify the interaction with it.
+You can use the method persist 
+(passing as argument a list of 
+Objects annotated as described 
+previously) to be persisted to the 
+database.
+
+
+================================================================================
+PÁGINA 38/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   38
+AUXILIARY CLASS TO INTERACT WITH HIBERNATE
+/**
+ * Gets one object from storage
+ * @param identifier - the objects identifier
+ * @param clazz - the class of the object that to be returned
+ */
+public <T> T get(Class<T> clazz, Object identifier) {
+    Transaction tx = null;
+    T element = null;
+    try(var session = sessionFactory.openSession()) {
+        tx = session.beginTransaction();
+        element = session.get(clazz, identifier);
+        tx.commit();
+    } catch (Exception e) {
+        if (tx!=null) tx.rollback();
+            throw e;
+    }
+    return element;
+}
+We have provided the class 
+lab3.server.persistence.Hibernate 
+to simplify the interaction with it.
+You can use the method get to 
+obtain an object previously 
+persisted by indicating the class of 
+the object and the value that 
+serves as primary key of that 
+object.
+
+
+================================================================================
+PÁGINA 39/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   39
+/**
+ * Updates one or more objects previously persisted.
+ * @param objects - the objects to update
+ */
+public void update(Object...objects) {
+    Transaction tx = null;
+    try(var session = sessionFactory.openSession()) {
+        tx = session.beginTransaction();
+        for( var o : objects)
+            session.merge(o);
+        tx.commit();
+    } catch (Exception e) {
+        if (tx!=null) tx.rollback();
+            throw e;
+    }
+}
+AUXILIARY CLASS TO INTERACT WITH HIBERNATE
+We have provided the class 
+lab3.server.persistence.Hibernate 
+to simplify the interaction with it.
+You can use the update method to 
+update multiple objects at the 
+same time (variable number of 
+arguments) within the context of a 
+single transaction.
+
+
+================================================================================
+PÁGINA 40/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   40
+AUXILIARY CLASS TO INTERACT WITH HIBERNATE
+/**
+ * Removes one or more objects from storage
+ * @param objects - the objects to remove from storage
+ */
+public void delete(Object...objects) f{
+    Transaction tx = null;
+    try(var session = sessionFactory.openSession()) {
+        tx = session.beginTransaction();
+        for( var o : objects)
+            session.remove(o);
+        tx.commit();
+    } catch (Exception e) {
+        if (tx!=null) tx.rollback();
+            throw e;
+    }
+}
+We have provided the class 
+lab3.server.persistence.Hibernate 
+to simplify the interaction with it.
+You can use the delete method to 
+delete multiple objects at the 
+same time (variable number of 
+arguments) within the context of a 
+single transaction.
+
+
+================================================================================
+PÁGINA 41/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   41
+AUXILIARY CLASS TO INTERACT WITH HIBERNATE
+/**
+ * Performs a jpql Hibernate query (SQL dialect)
+ * @param <T> The type of objects returned by the query
+ * @param jpqlStatement - the jpql query statement
+ * @param clazz - the class of the objects that will be returned
+ * @return - list of objects that match the query
+ */
+public <T> List<T> jpql(String jpqlStatement, Class<T> clazz) {
+    try(var session = sessionFactory.openSession()) {
+        var query = session.createQuery(jpqlStatement, clazz);
+        return query.list();
+    } catch (Exception e) {
+        throw e;
+    }
+}
+We have provided the class 
+lab3.server.persistence.Hibernate 
+to simplify the interaction with it.
+You can execute a jpql (Jakarta 
+Persistence Query Language) 
+statement to execute complex 
+queries over the objects within the 
+database.
+
+
+================================================================================
+PÁGINA 42/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   42
+AUXILIARY CLASS TO INTERACT WITH HIBERNATE
+/**
+ * Performs a (native) SQL query
+ *
+ * @param <T> The type of objects returned by the query
+ * @param sqlStatement - the sql query statement
+ * @param clazz - the class of the objects that will be returned
+ * @return - list of objects that match the query
+ */
+public <T> List<T> sql(String jpqlStatement, Class<T> clazz) {
+    try(var session = sessionFactory.openSession()) {
+        var query = session.createNativeQuery(jpqlStatement, clazz);
+        return query.list();
+    } catch (Exception e) {
+        throw e;
+    }
+}
+We have provided the class 
+lab3.server.persistence.Hibernate 
+to simplify the interaction with it.
+You can execute a native sql 
+(Simple Query Language) 
+statement to execute complex 
+queries over the objects within the 
+database.
+
+
+================================================================================
+PÁGINA 43/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   43
+AUXILIARY CLASS TO INTERACT WITH HIBERNATE
+/**
+ * Performs a (native) SQL query
+ *
+ * @param <T> The type of objects returned by the query
+ * @param sqlStatement - the sql query statement
+ * @param clazz - the class of the objects that will be returned
+ * @return - list of objects that match the query
+ */
+public <T> List<T> sql(String jpqlStatement, Class<T> clazz) {
+    try(var session = sessionFactory.openSession()) {
+        var query = session.createNativeQuery(jpqlStatement, clazz);
+        return query.list();
+    } catch (Exception e) {
+        throw e;
+    }
+}
+We have provided the class 
+lab3.server.persistence.Hibernate 
+to simplify the interaction with it.
+You can execute a native sql 
+(Simple Query Language) 
+statement to execute complex 
+queries over the objects within the 
+database.
+Notice that all these 
+methods might throw 
+exceptions when they are 
+executed.
+
+
+================================================================================
+PÁGINA 44/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   44
+HIBERNATE SIMPLE OPERATIONS: CREATE USER
+@Override
+public String postUser(User user) {
+    Log.info("postUser : " + user);
+    // Check if user data is valid
+    if (user.getName() == null || user.getPwd() == null || user.getDisplayName() == null ||
+ 
+ user.getDomain() == null) {
+        Log.info("User object invalid.");
+        throw new WebApplicationException(Status.BAD_REQUEST);
+    }
+    try {
+        hibernate.persist(user);
+    } catch (ConstraintViolationException e) {
+        e.printStackTrace(); //This exception is due to the user already existing...
+        Log.info("User already exists.");
+        throw new WebApplicationException(Status.CONFLICT);
+    } catch( Exception x) {
+        x.printStackTrace(); // Un-expected exception.Signal internal server error.
+        throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+    }
+    return user.getName() + "@" + user.getDomain();
+}
+
+
+--- POSSÍVEIS TABELAS/ESTRUTURAS ---
+     if   (user.getName()   ==   null   ||   user.getPwd()   ==   null   ||   user.getDisplayName()   ==   null   ||
+
+================================================================================
+PÁGINA 45/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   45
+HIBERNATE SIMPLE OPERATIONS: CREATE USER
+@Override
+public String postUser(User user) {
+    Log.info("postUser : " + user);
+    // Check if user data is valid
+    if (user.getName() == null || user.getPwd() == null || user.getDisplayName() == null ||
+ 
+ user.getDomain() == null) {
+        Log.info("User object invalid.");
+        throw new WebApplicationException(Status.BAD_REQUEST);
+    }
+    try {
+        hibernate.persist(user);
+    } catch (ConstraintViolationException e) {
+        e.printStackTrace(); //This exception is due to the user already existing...
+        Log.info("User already exists.");
+        throw new WebApplicationException(Status.CONFLICT);
+    } catch( Exception x) {
+        x.printStackTrace(); // Un-expected exception.Signal internal server error.
+        throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+    }
+    return user.getName() + "@" + user.getDomain();
+}
+The code is similar to what you have seen before (error 
+testing and returning the value back to the client), except 
+that now instead of storing the Java object on a map, we 
+use the persist method of our auxiliary class.
+
+
+--- POSSÍVEIS TABELAS/ESTRUTURAS ---
+     if   (user.getName()   ==   null   ||   user.getPwd()   ==   null   ||   user.getDisplayName()   ==   null   ||
+
+================================================================================
+PÁGINA 46/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   46
+HIBERNATE SIMPLE OPERATIONS: CREATE USER
+@Override
+public String postUser(User user) {
+    Log.info("postUser : " + user);
+    // Check if user data is valid
+    if (user.getName() == null || user.getPwd() == null || user.getDisplayName() == null ||
+ 
+ user.getDomain() == null) {
+        Log.info("User object invalid.");
+        throw new WebApplicationException(Status.BAD_REQUEST);
+    }
+    try {
+        hibernate.persist(user);
+    } catch (ConstraintViolationException e) {
+        e.printStackTrace(); //This exception is due to the user already existing...
+        Log.info("User already exists.");
+        throw new WebApplicationException(Status.CONFLICT);
+    } catch( Exception x) {
+        x.printStackTrace(); // Un-expected exception.Signal internal server error.
+        throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+    }
+    return user.getName() + "@" + user.getDomain();
+}
+A ConstraintViolationException is 
+thrown if the user already exists.
+Other exceptions may occur if the operation fails 
+in the databse.
+
+
+--- POSSÍVEIS TABELAS/ESTRUTURAS ---
+     if   (user.getName()   ==   null   ||   user.getPwd()   ==   null   ||   user.getDisplayName()   ==   null   ||
+
+================================================================================
+PÁGINA 47/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   47
+HIBERNATE SIMPLE OPERATIONS: GET USER
+@Override
+public User getUser(String name, String pwd) {
+    Log.info("getUser : name = " + name + "; pwd = " + pwd);
+    // Check if parameters are valid
+    if (name == null || pwd == null) {
+        Log.info("Name or password null.");
+        throw new WebApplicationException(Status.BAD_REQUEST);
+    }
+    User user = null;
+    try {
+       user = hibernate.get(User.class, name);
+    } catch( Exception x) {
+        x.printStackTrace(); // Un-expected exception. Signal internal server error.
+        throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+    }
+    // Check if user exists and password matches
+    if (user == null || !user.getPwd().equals(pwd)) {
+        Log.info("User does not exist or password is incorrect.");
+        throw new WebApplicationException(Status.FORBIDDEN);
+    }
+    return user;
+}
+
+
+--- POSSÍVEIS TABELAS/ESTRUTURAS ---
+     if   (name   ==   null   ||   pwd   ==   null )   {
+     if   (user   ==   null   ||   !user.getPwd().equals(pwd))   {
+
+================================================================================
+PÁGINA 48/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   48
+@Override
+public User getUser(String name, String pwd) {
+    Log.info("getUser : name = " + name + "; pwd = " + pwd);
+    // Check if parameters are valid
+    if (name == null || pwd == null) {
+        Log.info("Name or password null.");
+        throw new WebApplicationException(Status.BAD_REQUEST);
+    }
+    User user = null;
+    try {
+       user = hibernate.get(User.class, name);
+    } catch( Exception x) {
+        x.printStackTrace(); // Un-expected exception. Signal internal server error.
+        throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+    }
+    // Check if user exists and password matches
+    if (user == null || !user.getPwd().equals(pwd)) {
+        Log.info("User does not exist or password is incorrect.");
+        throw new WebApplicationException(Status.FORBIDDEN);
+    }
+    return user;
+}
+HIBERNATE SIMPLE OPERATIONS: GET USER
+The code is similar to what you have seen before (error 
+testing and returning the value back to the client), except 
+that now instead of obtaining the Java object from a map, 
+we use the get method of our auxiliary class, indicating the 
+class that we expect to obtain.
+
+
+--- POSSÍVEIS TABELAS/ESTRUTURAS ---
+     if   (name   ==   null   ||   pwd   ==   null )   {
+     if   (user   ==   null   ||   !user.getPwd().equals(pwd))   {
+
+================================================================================
+PÁGINA 49/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   49
+HIBERNATE QUERIES
+Has shown before we have, in our auxiliary class, provided 
+methods to support two types of query languages:
+•
+JPQL to define searches against persistent entities 
+independent of the mechanism used to store those entities 
+(i.e., the backend storage engine).
+•
+Native SQL to define queries using the SQL dialect of the 
+backend storage engine (i.e., the underlying database)
+
+
+================================================================================
+PÁGINA 50/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   50
+HIBERNATE QUERIES: JPQL
+@Override
+public List<User> searchUsers(String name, String pwd, String pattern) {
+    Log.info("searchUsers : name = " + name + "; pwd = " + pwd + "; pattern = " + pattern);
+    User usr = this.getUser(name, pwd);
+    try {
+        List<User> list = hibernate.jql("SELECT u FROM User u WHERE u.name LIKE '%" + pattern + "%'",
+ 
+ 
+ 
+User.class);
+        return list;
+    } catch (Exception e) {
+        e.printStackTrace();
+        throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+    }
+}
+SELECT u FROM User u WHERE u.name LIKE '%nuno%'
+
+
+================================================================================
+PÁGINA 51/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   51
+HIBERNATE QUERIES: NATIVE SQL
+SELECT * FROM User u WHERE u.displayName LIKE '%nuno%'
+@Override
+public List<User> searchUsers(String pattern) {
+    Log.info("searchUsers : pattern = " + pattern);
+    try {
+        List<User> list = hibernate.sql("SELECT * FROM User u WHERE u.displayName LIKE '%" + pattern
+ 
+ 
+ 
++"%'", User.class);
+        return list;
+    } catch (Exception e) {
+        e.printStackTrace();
+        throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+    }
+}
+
+
+================================================================================
+PÁGINA 52/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   52
+FURTHER CONTROL THE MAPPING TO TABLES 
+Since we have setup the option to show the queries executed 
+over the database, we can see the effects of operations that 
+we execute over our server in the server terminal.
+For instance, we we persist the first User object, you can see 
+the creation of the table.
+Hibernate: create table User (displayName varchar(1024), 
+domain varchar(255), name varchar(255) not null, pwd 
+varchar(255), primary key (name))
+
+
+================================================================================
+PÁGINA 53/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   53
+FURTHER CONTROL THE MAPPING TO TABLES 
+Since we have setup the option to show the queries executed 
+over the database, we can see the effects of operations that 
+we execute over our server in the server terminal.
+For instance, we we persist the first User object, you can see 
+the creation of the table.
+Hibernate: create table User (displayName varchar(1024), 
+domain varchar(255), name varchar(255) not null, pwd 
+varchar(255), primary key (name))
+Each type of POJO that we can persist is stored in its own 
+table (by default the name of the table will be the name of 
+the POJO).
+
+
+================================================================================
+PÁGINA 54/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   54
+FURTHER CONTROL THE MAPPING TO TABLES 
+Since we have setup the option to show the queries executed 
+over the database, we can see the effects of operations that 
+we execute over our server in the server terminal.
+For instance, we we persist the first User object, you can see 
+the creation of the table.
+Hibernate: create table User (displayName varchar(1024), 
+domain varchar(255), name varchar(255) not null, pwd 
+varchar(255), primary key (name))
+Elements that are part of the primary key (i.e., have the @Id 
+annotation) will have a not null constraint.
+
+
+================================================================================
+PÁGINA 55/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   55
+FURTHER CONTROL THE MAPPING TO TABLES 
+Since we have setup the option to show the queries executed 
+over the database, we can see the effects of operations that 
+we execute over our server in the server terminal.
+For instance, we we persist the first User object, you can see 
+the creation of the table.
+Hibernate: create table User (displayName varchar(1024), 
+domain varchar(255), name varchar(255) not null, pwd 
+varchar(255), primary key (name))
+Every String is converted into type varchar(255), textual 
+format with at most 255 characters, unless otherwise 
+specified in the class.
+
+
+================================================================================
+PÁGINA 56/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   56
+FURTHER CONTROL THE MAPPING TO TABLES 
+Since we have setup the option to show the queries executed 
+over the database, we can see the effects of operations that 
+we execute over our server in the server terminal.
+For instance, we we persist the first User object, you can see 
+the creation of the table.
+Hibernate: create table User_phoneNumbers (User_name 
+varchar(255) not null, phoneNumbers varchar(255))
+Hibernate: alter table User_phoneNumbers add constraint 
+FK2akah1phggekdx2fjlv9dqpyy foreign key (User_name) 
+references User
+As the User object as a collection for the phone numbers, 
+hibernate creates a table to store the values of the collection 
+and adds a foreign key constraint. 
+
+
+================================================================================
+PÁGINA 57/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   57
+/**
+ * Represents a user in the system.
+ */
+@Entity
+public class User {
+    @Id
+    private String name;
+    private String pwd;
+    private String domain;
+    @Column(length = 1024)
+    private String displayName;
+    @ElementCollection( fetch = FetchType.EAGER)
+    private Set<String> phoneNumbers;
+    public User() {
+    }
+    public User(String name, String pwd, String displayName, String domain, Set<String> phoneNumbers) {
+        this.pwd = pwd;
+        this.name = name;
+        this.domain = domain;
+        this.displayName = displayName;
+        this.phoneNumbers = Set.copyOf( phoneNumbers);
+    }
+ADDITIONAL ANNOTATION ON POJOS
+In this example the User has an obvious 
+primary key, in some entities we might 
+have composite primary keys (i.e., the 
+primary key is composed of multiple 
+fields).
+In this case the @Id annotation can be 
+used to identify all elements that are part 
+of the primary key.
+
+
+================================================================================
+PÁGINA 58/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   58
+/**
+ * Represents a user in the system.
+ */
+@Entity
+public class User {
+    @Id
+    private String name;
+    private String pwd;
+    private String domain;
+    @Column(length = 1024)
+    private String displayName;
+    @ElementCollection( fetch = FetchType.EAGER)
+    private Set<String> phoneNumbers;
+    public User() {
+    }
+    public User(String name, String pwd, String displayName, String domain, Set<String> phoneNumbers) {
+        this.pwd = pwd;
+        this.name = name;
+        this.domain = domain;
+        this.displayName = displayName;
+        this.phoneNumbers = Set.copyOf( phoneNumbers);
+    }
+ADDITIONAL ANNOTATION ON POJOS
+If you have a primary key composed of a single 
+number (i.e., Long), you can autogenerate the 
+value when you insert the object in the database 
+with the additional annotation:
+@GeneratedValue(strategy=GenerationType.AUTO)
+
+
+================================================================================
+PÁGINA 59/59
+================================================================================
+
+--- TEXTO ---
+Distributed Systems 25/26 – DI/FCT/NOVA  /   59
+EXERCISE
+1.
+Test the client provided that already has the logic for doing 
+retries (CreateUser operation). Complete the remaining 
+operations and create the clients for all operations (you can 
+reuse the code of last week).
+2.
+Complete the logic of the operation of the UsersResource 
+(you can use what you have done last week) by storing data 
+managed by the service to Hibernate (classes to support this 
+are provided in the lab materials).
+
+
+================================================================================
+FIM DA ANÁLISE
+================================================================================

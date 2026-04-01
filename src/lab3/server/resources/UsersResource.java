@@ -77,21 +77,122 @@ public class UsersResource implements RestUsers {
 	@Override
 	public User updateUser(String name, String pwd, User info) {
 		Log.info("updateUser : name = " + name + "; pwd = " + pwd + " ; info = " + info);
-		// TODO: Complete method
-		throw new WebApplicationException(Status.NOT_IMPLEMENTED);
+
+		// Check if parameters are valid
+		if (name == null || pwd == null || info == null) {
+			Log.info("Name, password or info null.");
+			throw new WebApplicationException(Status.BAD_REQUEST);
+		}
+
+		User user = null;
+		try {
+			user = hibernate.get(User.class, name);
+		} catch( Exception x ) {
+			x.printStackTrace();
+			throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+		}
+
+		// Check if user exists and password matches
+		if (user == null || !user.getPwd().equals(pwd)) {
+			Log.info("User does not exist or password is incorrect.");
+			throw new WebApplicationException(Status.FORBIDDEN);
+		}
+
+		// Update fields (only if not null in info)
+		if (info.getPwd() != null)
+			user.setPwd(info.getPwd());
+		if (info.getDisplayName() != null)
+			user.setDisplayName(info.getDisplayName());
+		if (info.getDomain() != null)
+			user.setDomain(info.getDomain());
+		if (info.getPhoneNumbers() != null)
+			user.setPhoneNumbers(info.getPhoneNumbers());
+
+		try {
+			hibernate.update(user);
+		} catch( Exception x ) {
+			x.printStackTrace();
+			throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+		}
+
+		return user;
 	}
 
 	@Override
 	public User deleteUser(String name, String pwd) {
 		Log.info("deleteUser : name = " + name + "; pwd = " + pwd);
-		// TODO: Complete method
-		throw new WebApplicationException(Status.NOT_IMPLEMENTED);
+
+		// Check if parameters are valid
+		if (name == null || pwd == null) {
+			Log.info("Name or password null.");
+			throw new WebApplicationException(Status.BAD_REQUEST);
+		}
+
+		User user = null;
+		try {
+			user = hibernate.get(User.class, name);
+		} catch( Exception x ) {
+			x.printStackTrace();
+			throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+		}
+
+		// Check if user exists and password matches
+		if (user == null || !user.getPwd().equals(pwd)) {
+			Log.info("User does not exist or password is incorrect.");
+			throw new WebApplicationException(Status.FORBIDDEN);
+		}
+
+		try {
+			hibernate.delete(user);
+		} catch( Exception x ) {
+			x.printStackTrace();
+			throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+		}
+
+		return user;
 	}
 
 	@Override
 	public List<User> searchUsers(String name, String pwd, String pattern) {
 		Log.info("searchUsers : name = " + name + "; pwd = " + pwd + "; pattern = " + pattern);
-		// TODO: Complete method
-		throw new WebApplicationException(Status.NOT_IMPLEMENTED);
+
+		// Check if parameters are valid
+		if (name == null || pwd == null) {
+			Log.info("Name or password null.");
+			throw new WebApplicationException(Status.BAD_REQUEST);
+		}
+
+		// Verify that the user performing the search exists and has correct password
+		User requestingUser = null;
+		try {
+			requestingUser = hibernate.get(User.class, name);
+		} catch( Exception x ) {
+			x.printStackTrace();
+			throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+		}
+
+		if (requestingUser == null || !requestingUser.getPwd().equals(pwd)) {
+			Log.info("User does not exist or password is incorrect.");
+			throw new WebApplicationException(Status.FORBIDDEN);
+		}
+
+		// Perform search using JPQL (case-insensitive substring match)
+		List<User> results = null;
+		try {
+			// If pattern is null or empty, return all users
+			String searchPattern = (pattern == null || pattern.isEmpty()) ? "" : pattern.toLowerCase();
+			String jpqlQuery = "SELECT u FROM User u WHERE LOWER(u.name) LIKE '%" + searchPattern + "%'";
+			results = hibernate.jpql(jpqlQuery, User.class);
+			
+			// Set passwords to empty string as per specification
+			for (User u : results) {
+				u.setPwd("");
+			}
+		} catch( Exception x ) {
+			x.printStackTrace();
+			throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+		}
+
+		return results;
 	}
 }

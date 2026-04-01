@@ -80,30 +80,132 @@ public class RestUsersClient {
 	}
 
 	public Result<User> getUser(String name, String pwd) {
-		Response r = target.path( name )
-				.queryParam(RestUsers.PWD, pwd).request()
-				.accept(MediaType.APPLICATION_JSON)
-				.get();
+		
+		for(int i = 0; i < MAX_RETRIES ; i++) {
+			try {
+				Response r = target.path( name )
+						.queryParam(RestUsers.PWD, pwd).request()
+						.accept(MediaType.APPLICATION_JSON)
+						.get();
 
-		int status = r.getStatus();
-		if( status != Status.OK.getStatusCode() )
-			return Result.error( getErrorCodeFrom(status));
-		else
-			return Result.ok( r.readEntity( User.class ));
+				int status = r.getStatus();
+				if( status != Status.OK.getStatusCode() )
+					return Result.error( getErrorCodeFrom(status));
+				else
+					return Result.ok( r.readEntity( User.class ));
+				
+			} catch( ProcessingException x ) {
+				Log.info(x.getMessage());
+				
+				try {
+					Thread.sleep(RETRY_SLEEP);
+				} catch (InterruptedException e) {
+					//Nothing to be done here.
+				}
+			}
+			catch( Exception x ) {
+				x.printStackTrace();
+			}
+		}
+		return Result.error(  ErrorCode.TIMEOUT );
 	}
 	
 	
 
 	public Result<User> updateUser(String name, String pwd, User user) {
-		throw new RuntimeException("Not Implemented...");		
+		
+		for(int i = 0; i < MAX_RETRIES ; i++) {
+			try {
+				Response r = target.path( name )
+						.queryParam(RestUsers.PWD, pwd).request()
+						.accept(MediaType.APPLICATION_JSON)
+						.put(Entity.entity(user, MediaType.APPLICATION_JSON));
+				
+				int status = r.getStatus();
+				if( status != Status.OK.getStatusCode() )
+					return Result.error( getErrorCodeFrom(status));
+				else
+					return Result.ok( r.readEntity( User.class ));
+				
+			} catch( ProcessingException x ) {
+				Log.info(x.getMessage());
+				
+				try {
+					Thread.sleep(RETRY_SLEEP);
+				} catch (InterruptedException e) {
+					//Nothing to be done here.
+				}
+			}
+			catch( Exception x ) {
+				x.printStackTrace();
+			}
+		}
+		return Result.error(  ErrorCode.TIMEOUT );
 	}
 
 	public Result<User> deleteUser(String name, String pwd) {
-		throw new RuntimeException("Not Implemented...");
+		
+		for(int i = 0; i < MAX_RETRIES ; i++) {
+			try {
+				Response r = target.path( name )
+						.queryParam(RestUsers.PWD, pwd).request()
+						.accept(MediaType.APPLICATION_JSON)
+						.delete();
+				
+				int status = r.getStatus();
+				if( status != Status.OK.getStatusCode() )
+					return Result.error( getErrorCodeFrom(status));
+				else
+					return Result.ok( r.readEntity( User.class ));
+				
+			} catch( ProcessingException x ) {
+				Log.info(x.getMessage());
+				
+				try {
+					Thread.sleep(RETRY_SLEEP);
+				} catch (InterruptedException e) {
+					//Nothing to be done here.
+				}
+			}
+			catch( Exception x ) {
+				x.printStackTrace();
+			}
+		}
+		return Result.error(  ErrorCode.TIMEOUT );
 	}
 
 	public Result<List<User>> searchUsers(String name, String pwd, String pattern) {
-		throw new RuntimeException("Not Implemented...");
+		
+		for(int i = 0; i < MAX_RETRIES ; i++) {
+			try {
+				Response r = target
+						.queryParam(RestUsers.NAME, name)
+						.queryParam(RestUsers.PWD, pwd)
+						.queryParam(RestUsers.QUERY, pattern)
+						.request()
+						.accept(MediaType.APPLICATION_JSON)
+						.get();
+				
+				int status = r.getStatus();
+				if( status != Status.OK.getStatusCode() )
+					return Result.error( getErrorCodeFrom(status));
+				else
+					return Result.ok( r.readEntity( new jakarta.ws.rs.core.GenericType<List<User>>() {} ));
+				
+			} catch( ProcessingException x ) {
+				Log.info(x.getMessage());
+				
+				try {
+					Thread.sleep(RETRY_SLEEP);
+				} catch (InterruptedException e) {
+					//Nothing to be done here.
+				}
+			}
+			catch( Exception x ) {
+				x.printStackTrace();
+			}
+		}
+		return Result.error(  ErrorCode.TIMEOUT );
 	}
 
 	public static ErrorCode getErrorCodeFrom(int status) {
